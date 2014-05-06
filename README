@@ -1,8 +1,8 @@
 THIS README CONTAINS OUTDATED INFORMATION - please refer to the wiki or --help
 
-S3FS-Fuse
+S3FS-Crypto-Fuse
 
-S3FS is FUSE (File System in User Space) based solution to mount/unmount an Amazon S3 storage buckets and use system commands with S3 just like it was another Hard Disk.
+S3FS-Crypto-Fuse is a fork of S3FS-Fuse. It's a FUSE (File System in User Space) based solution to mount/unmount an Amazon S3 storage buckets and use system commands with S3 just like it was another Hard Disk. All files are encrypted using AES-128-CBC on upload and decrypted on download. (NOTE: Right now the encryption key is automatically generated using the first 16 bytes of the user's AWS secret key. In the future the program will accept a filepath containing the key as a parameter, but right now it does not. If the AWS Secret is lost or changed the files on the server will be unencryptable.)
 
 In order to compile s3fs, You'll need the following requirements:
 
@@ -62,4 +62,4 @@ s3fs should be working fine with S3 storage. However, There are couple of limita
 * Currently s3fs could hang the CPU if you have lots of time-outs. This is *NOT* a fault of s3fs but rather libcurl. This happends when you try to copy thousands of files in 1 session, it doesn't happend when you upload hundreds of files or less.
 * CentOS 4.x/RHEL 4.x users - if you use the kernel that shipped with your distribution and didn't upgrade to the latest kernel RedHat/CentOS gives, you might have a problem loading the "fuse" kernel. Please upgrade to the latest kernel (2.6.16 or above) and make sure "fuse" kernel module is compiled and loadable since FUSE requires this kernel module and s3fs requires it as well.
 * Moving/renaming/erasing files takes time since the whole file needs to be accessed first. A workaround could be to use s3fs's cache support with the use_cache option.
-
+* Right now only AWS secret keys are used for encryption and decryption. If you lose or change your key, your files will be corrupted. The ability to load a key from an external file will be added in future revisions of the program.

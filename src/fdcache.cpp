@@ -45,6 +45,8 @@
 #include "s3fs_util.h"
 #include "string_util.h"
 #include "curl.h"
+#include "cryptopp/aes.h"
+#include "crypt.h"
 
 using namespace std;
 
@@ -789,6 +791,11 @@ int FdEntity::Load(off_t start, off_t size)
   }
   AutoLock auto_lock(&fdent_lock);
 
+  //Preparing key for later decryption
+  byte aes_key[CryptoPP::AES::DEFAULT_KEYLENGTH];
+  string inkey = S3fsCurl::GetAccessKey();
+  s3fs_keyform(aes_key, inkey);
+
   // check loaded area & load
   fdpage_list_t uninit_list;
   if(0 < pagelist.GetUninitPages(uninit_list, start)){
@@ -816,6 +823,9 @@ int FdEntity::Load(off_t start, off_t size)
       if(0 != result){
         break;
       }
+
+      // DECRYPTION CODE HERE
+      s3fs_decrypt(fd, aes_key);
 
       // Set init flag
       pagelist.SetInit((*iter)->offset, static_cast<off_t>((*iter)->bytes), true);
@@ -872,6 +882,12 @@ int FdEntity::RowFlush(const char* tpath, headers_t& meta, bool ow_sse_flg, bool
     return 0;
   }
 
+  // PUT ENCRYPTION CODE HERE //
+  byte aes_key[CryptoPP::AES::DEFAULT_KEYLENGTH];
+  string inkey = S3fsCurl::GetAccessKey();
+  s3fs_keyform(aes_key, inkey);
+  s3fs_encrypt(fd, aes_key); 
+
   /*
    * Make decision to do multi upload (or not) based upon file size
    * 
@@ -911,6 +927,9 @@ int FdEntity::RowFlush(const char* tpath, headers_t& meta, bool ow_sse_flg, bool
     S3fsCurl s3fscurl(true);
     result = s3fscurl.PutRequest(tpath ? tpath : path.c_str(), meta, fd, ow_sse_flg);
   }
+
+  // DECRYPT LOCAL FILE AFTER UPLOAD
+  s3fs_decrypt(fd, aes_key);
 
   // seek to head of file.
   if(0 == result && 0 != lseek(fd, 0, SEEK_SET)){

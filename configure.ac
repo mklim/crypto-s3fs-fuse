@@ -102,6 +102,8 @@ AS_IF(
 
 AS_UNSET(nss_enabled)
 
+DEPS_LIBS="$DEPS_LIBS -lcryptopp"
+
 AC_CONFIG_FILES(Makefile src/Makefile test/Makefile doc/Makefile)
 AC_OUTPUT
 

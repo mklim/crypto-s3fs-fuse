@@ -19,6 +19,4 @@
 # 
 #  See the file ChangeLog for a revision history. 
 
-aclocal \
-&& automake --add-missing \
-&& autoconf
+aclocal && automake --add-missing && autoconf
